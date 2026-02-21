@@ -63,23 +63,33 @@
               <Control xsi:type="Button" id="Contoso.TaskpaneButton">
                 <Label resid="Contoso.TaskpaneButton.Label" />
                 <Supertip>
-                  <!-- ヒントのタイトル。resid は、短い文字列リソースをポイントしている必要があります。 -->
                   <Title resid="Contoso.TaskpaneButton.Label" />
-                  <!-- ヒントの説明。resid は、長い文字列リソースをポイントしている必要があります。 -->
                   <Description resid="Contoso.TaskpaneButton.Tooltip" />
                 </Supertip>
                 <Icon>
-                  <!--
-                  -->
                   <bt:Image size="16" resid="Contoso.tpicon_16x16" />
                   <bt:Image size="32" resid="Contoso.tpicon_32x32" />
                   <bt:Image size="80" resid="Contoso.tpicon_80x80" />
                   <bt:Image size="512" resid="Contoso.tpicon_512x512" />
                 </Icon>
-
-                <!-- コマンドがトリガーされた (たとえば、リボンがクリックされた) ときに実行される内容です。サポートされるアクションは、ExecuteFunction または ShowTaskpane です。 -->
                 <Action xsi:type="ExecuteFunction">
                   <FunctionName>copyToMarkdown</FunctionName>
+                </Action>
+              </Control>
+              <Control xsi:type="Button" id="Contoso.PasteButton">
+                <Label resid="Contoso.PasteButton.Label" />
+                <Supertip>
+                  <Title resid="Contoso.PasteButton.Label" />
+                  <Description resid="Contoso.PasteButton.Tooltip" />
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Contoso.tpicon_16x16" />
+                  <bt:Image size="32" resid="Contoso.tpicon_32x32" />
+                  <bt:Image size="80" resid="Contoso.tpicon_80x80" />
+                  <bt:Image size="512" resid="Contoso.tpicon_512x512" />
+                </Icon>
+                <Action xsi:type="ExecuteFunction">
+                  <FunctionName>pasteFromMarkdown</FunctionName>
                 </Action>
               </Control>
             </OfficeMenu>
@@ -103,10 +113,12 @@
       <!-- 短い文字列の最大文字数==125。 -->
       <bt:ShortStrings>
         <bt:String id="Contoso.TaskpaneButton.Label" DefaultValue="Copy to Markdown" />
+        <bt:String id="Contoso.PasteButton.Label" DefaultValue="Paste from Markdown" />
       </bt:ShortStrings>
       <!-- 長い文字列の最大文字数==250。 -->
       <bt:LongStrings>
         <bt:String id="Contoso.TaskpaneButton.Tooltip" DefaultValue="Copy selected range to Markdown format" />
+        <bt:String id="Contoso.PasteButton.Tooltip" DefaultValue="Paste markdown table into Excel" />
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

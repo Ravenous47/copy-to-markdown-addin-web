@@ -8,16 +8,18 @@ console.log("FunctionFile.js loaded!");
     };
 })();
 
-// Register the function globally
+// Register functions globally
 if (typeof window !== 'undefined') {
     window.copyToMarkdown = copyToMarkdown;
-    console.log("copyToMarkdown registered globally");
+    window.pasteFromMarkdown = pasteFromMarkdown;
+    console.log("Functions registered globally");
 }
 
 // Also register with Office
 if (typeof Office !== 'undefined' && Office.actions) {
     Office.actions.associate("copyToMarkdown", copyToMarkdown);
-    console.log("copyToMarkdown registered with Office.actions");
+    Office.actions.associate("pasteFromMarkdown", pasteFromMarkdown);
+    console.log("Functions registered with Office.actions");
 }
 
 var NewLine = "\n";
@@ -230,3 +232,41 @@ var StringBuilder = function (string) {
         this.append(string);
     }
 };
+
+// Paste from Markdown function
+function pasteFromMarkdown(event) {
+    console.log("pasteFromMarkdown called");
+
+    var dialogUrl = 'https://ravenous47.github.io/copy-to-markdown-addin-web/paste-dialog.html';
+
+    try {
+        Office.context.ui.displayDialogAsync(
+            dialogUrl,
+            { height: 60, width: 50 },
+            function(result) {
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    console.log("✓ Paste dialog opened");
+                    var dialog = result.value;
+
+                    // Handle messages from dialog
+                    dialog.addEventHandler(Office.EventType.DialogMessageReceived, function(arg) {
+                        console.log("Message from dialog:", arg.message);
+                        dialog.close();
+
+                        if (arg.message === 'success') {
+                            console.log("✓ Data inserted successfully");
+                        }
+
+                        event.completed();
+                    });
+                } else {
+                    console.error("✗ Failed to open paste dialog:", result.error);
+                    event.completed();
+                }
+            }
+        );
+    } catch (err) {
+        console.error("✗ Exception opening paste dialog:", err);
+        event.completed();
+    }
+}
