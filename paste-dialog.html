@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paste from Markdown</title>
     <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script src="libs/markdown-it.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -185,6 +186,46 @@
         });
 
         function parseMarkdownTable(markdown) {
+            // Use markdown-it to parse markdown
+            var md = window.markdownit();
+            var tokens = md.parse(markdown, {});
+
+            var data = [];
+            var currentTable = null;
+
+            // Extract table data from tokens
+            for (var i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+
+                if (token.type === 'table_open') {
+                    currentTable = [];
+                } else if (token.type === 'tr_open') {
+                    currentTable.push([]);
+                } else if (token.type === 'td_open' || token.type === 'th_open') {
+                    // Next token should be inline with text
+                    if (i + 1 < tokens.length && tokens[i + 1].type === 'inline') {
+                        var text = tokens[i + 1].content;
+                        currentTable[currentTable.length - 1].push(text);
+                    }
+                } else if (token.type === 'table_close') {
+                    // Table complete
+                    if (currentTable && currentTable.length > 0) {
+                        data = currentTable;
+                        break;
+                    }
+                }
+            }
+
+            // Fallback to simple parsing if markdown-it didn't find table
+            if (data.length === 0) {
+                data = parseSimpleTable(markdown);
+            }
+
+            return data;
+        }
+
+        function parseSimpleTable(markdown) {
+            // Fallback simple parser
             var lines = markdown.split('\n').filter(function(line) {
                 return line.trim().length > 0;
             });

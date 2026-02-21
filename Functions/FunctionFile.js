@@ -42,47 +42,29 @@ function copyToMarkdown(event) {
             .then(ctx.sync)
             .then(function() {
                 console.log("Cells loaded: " + cells.length);
-                var resultBuffer = new StringBuilder();
-                var separatorBuffer = new StringBuilder();
-                for (var x = 0; x < range.columnCount; x++)
-                {
-                    var cell = cells[x];
 
-                    resultBuffer.append("|");
-                    resultBuffer.append(formatText(cell.text));
-                    switch (cell.format.horizontalAlignment)
-                    {
-                        case "Center":
-                            separatorBuffer.append("|:-:");
-                            break;
-                        case "Right":
-                            separatorBuffer.append("|--:");
-                            break;
-                        default:
-                            separatorBuffer.append("|:--");
-                            break;
+                // Convert cells to 2D array for markdown-table library
+                var tableData = [];
+                for (var row = 0; row < range.rowCount; row++) {
+                    var rowData = [];
+                    for (var col = 0; col < range.columnCount; col++) {
+                        var cell = cells[row * range.columnCount + col];
+                        rowData.push(formatText(cell.text));
                     }
-                }
-                resultBuffer.append("|");
-                resultBuffer.append(NewLine);
-                separatorBuffer.append("|");
-                separatorBuffer.append(NewLine);
-                resultBuffer.append(separatorBuffer.toString());
-
-                for (var row = 1; row < range.rowCount; row++)
-                {
-                    for (var col = 0; col < range.columnCount; col++)
-                    {
-                        var valueCell = cells[row * range.columnCount + col];
-
-                        resultBuffer.append("|");
-                        resultBuffer.append(formatText(valueCell.text));
-                    }
-                    resultBuffer.append("|");
-                    resultBuffer.append(NewLine);
+                    tableData.push(rowData);
                 }
 
-                var result = resultBuffer.toString();
+                // Use markdown-table library to generate markdown
+                var result;
+                if (typeof markdownTable !== 'undefined') {
+                    result = markdownTable(tableData);
+                    console.log("Generated markdown using markdownTable library");
+                } else {
+                    // Fallback to manual generation if library not loaded
+                    console.warn("markdown-table library not loaded, using fallback");
+                    result = generateMarkdownManually(tableData);
+                }
+
                 console.log("Generated markdown (" + result.length + " chars)");
                 console.log("Markdown preview:", result.substring(0, 100));
 
@@ -213,6 +195,27 @@ function formatText(range)
     else {
         return range.join().replace(NewLine, "<br>");
     }
+}
+
+function generateMarkdownManually(tableData) {
+    // Fallback manual markdown generation
+    var result = '';
+
+    if (tableData.length === 0) return result;
+
+    // Header row
+    result += '| ' + tableData[0].join(' | ') + ' |\n';
+
+    // Separator row
+    var separators = tableData[0].map(function() { return '---'; });
+    result += '| ' + separators.join(' | ') + ' |\n';
+
+    // Data rows
+    for (var i = 1; i < tableData.length; i++) {
+        result += '| ' + tableData[i].join(' | ') + ' |\n';
+    }
+
+    return result;
 }
 
 
