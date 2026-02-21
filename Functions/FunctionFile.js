@@ -160,6 +160,8 @@ function tryTextareaMethod(result, event) {
 }
 
 function showMarkdownDialog(markdown, event) {
+    console.log("showMarkdownDialog called");
+
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
         'body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }' +
         'h2 { color: #2c3e50; margin-top: 0; }' +
@@ -191,21 +193,28 @@ function showMarkdownDialog(markdown, event) {
         '}' +
         '<\/script></body></html>';
 
-    Office.context.ui.displayDialogAsync(
-        'data:text/html,' + encodeURIComponent(html),
-        { height: 50, width: 40 },
-        function(result) {
-            if (result.status === Office.AsyncResultStatus.Succeeded) {
-                console.log("✓ Dialog opened");
-            } else {
-                console.error("✗ Dialog failed:", result.error.message);
-                // Last resort: log to console
-                console.log("\n=== MARKDOWN OUTPUT ===\n" + markdown + "\n======================\n");
-                alert("Copy from console (F12):\n\n" + markdown);
+    console.log("Attempting to open dialog...");
+
+    try {
+        Office.context.ui.displayDialogAsync(
+            'data:text/html,' + encodeURIComponent(html),
+            { height: 50, width: 40 },
+            function(result) {
+                console.log("Dialog callback received");
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    console.log("✓ Dialog opened successfully");
+                } else {
+                    console.error("✗ Dialog failed:", result.error);
+                    console.log("\n=== MARKDOWN OUTPUT ===\n" + markdown + "\n======================\n");
+                }
+                event.completed();
             }
-            event.completed();
-        }
-    );
+        );
+    } catch (err) {
+        console.error("✗ Exception opening dialog:", err);
+        console.log("\n=== MARKDOWN OUTPUT ===\n" + markdown + "\n======================\n");
+        event.completed();
+    }
 }
 
 function escapeHtml(text) {
