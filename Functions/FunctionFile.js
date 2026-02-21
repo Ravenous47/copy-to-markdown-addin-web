@@ -8,11 +8,14 @@
 var NewLine = "\n";
 
 function copyToMarkdown(event) {
+    console.log("copyToMarkdown called");
+
     Excel.run(function (ctx) {
         var cells = [];
         var range = ctx.workbook.getSelectedRange().load(["rowCount", "columnCount"]);
         return ctx.sync()
             .then(function () {
+                console.log("Range loaded: " + range.rowCount + "x" + range.columnCount);
                 for (var row = 0; row < range.rowCount; row++) {
                     for (var col = 0; col < range.columnCount; col++) {
                         cells.push(range.getCell(row, col).load(["text", "format"]));
@@ -21,6 +24,7 @@ function copyToMarkdown(event) {
             })
             .then(ctx.sync)
             .then(function() {
+                console.log("Cells loaded: " + cells.length);
                 var resultBuffer = new StringBuilder();
                 var separatorBuffer = new StringBuilder();
                 for (var x = 0; x < range.columnCount; x++)
@@ -62,51 +66,91 @@ function copyToMarkdown(event) {
                 }
 
                 var result = resultBuffer.toString();
+                console.log("Generated markdown (" + result.length + " chars)");
+                console.log("Markdown preview:", result.substring(0, 100));
 
-                // Copy to clipboard using modern API
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    // Modern browsers
-                    navigator.clipboard.writeText(result).then(function() {
-                        console.log("Copied to clipboard");
+                // Use Office.js built-in method to set clipboard data
+                Office.context.document.setSelectedDataAsync(result, {
+                    coercionType: Office.CoercionType.Text
+                }, function(asyncResult) {
+                    if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
+                        console.log("✓ Copied to clipboard successfully");
+                        // Show notification
+                        showNotification("Success", "Markdown copied to clipboard!");
                         event.completed();
-                    }).catch(function(err) {
-                        console.error("Clipboard error:", err);
-                        // Fallback: show result in dialog
-                        Office.context.ui.displayDialogAsync(
-                            'data:text/html,' + encodeURIComponent('<textarea style="width:100%;height:100%">' + result + '</textarea>'),
-                            {height: 50, width: 50}
-                        );
-                        event.completed();
-                    });
-                } else if (window.clipboardData) {
-                    // IE fallback
-                    window.clipboardData.setData("Text", result);
-                    event.completed();
-                } else {
-                    // Last resort: create temporary textarea
-                    var textarea = document.createElement('textarea');
-                    textarea.value = result;
-                    textarea.style.position = 'fixed';
-                    textarea.style.opacity = '0';
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-                        console.log("Copied using execCommand");
-                    } catch (err) {
-                        console.error("Copy failed:", err);
+                    } else {
+                        console.error("✗ Clipboard failed:", asyncResult.error.message);
+                        // Fallback: Try navigator.clipboard
+                        tryModernClipboard(result, event);
                     }
-                    document.body.removeChild(textarea);
-                    event.completed();
-                }
+                });
             });
     }).catch(function (error) {
-        console.log("Error: " + error);
+        console.error("Error in copyToMarkdown:", error);
         if (error instanceof OfficeExtension.Error) {
-            console.log("Debug info: " + JSON.stringify(error.debugInfo));
+            console.error("Debug info:", JSON.stringify(error.debugInfo));
         }
+        showNotification("Error", error.toString());
         event.completed({allowEvent: false});
     });
+}
+
+function tryModernClipboard(result, event) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(result).then(function() {
+            console.log("✓ Copied using navigator.clipboard");
+            showNotification("Success", "Copied to clipboard!");
+            event.completed();
+        }).catch(function(err) {
+            console.error("✗ navigator.clipboard failed:", err);
+            tryTextareaFallback(result, event);
+        });
+    } else {
+        tryTextareaFallback(result, event);
+    }
+}
+
+function tryTextareaFallback(result, event) {
+    var textarea = document.createElement('textarea');
+    textarea.value = result;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-999999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    var success = false;
+    try {
+        success = document.execCommand('copy');
+        console.log("execCommand copy:", success ? "✓ success" : "✗ failed");
+    } catch (err) {
+        console.error("✗ execCommand failed:", err);
+    }
+
+    document.body.removeChild(textarea);
+
+    if (success) {
+        showNotification("Success", "Copied using fallback method!");
+    } else {
+        showNotification("Error", "Could not copy. Please use Ctrl+C manually.");
+        // Select the data in Excel so user can copy manually
+        console.log("Clipboard unavailable. Result:", result);
+    }
+
+    event.completed();
+}
+
+function showNotification(title, message) {
+    console.log("NOTIFICATION:", title, "-", message);
+    // Try to show Office notification
+    if (Office.context.ui && Office.context.ui.displayDialogAsync) {
+        var html = '<html><body style="font-family:Arial;padding:20px;"><h2>' +
+                   title + '</h2><p>' + message + '</p></body></html>';
+        Office.context.ui.displayDialogAsync(
+            'data:text/html,' + encodeURIComponent(html),
+            {height: 30, width: 40}
+        );
+    }
+}
 }
 
 function formatText(range)
