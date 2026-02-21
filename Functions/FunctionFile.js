@@ -257,19 +257,30 @@ function pasteFromMarkdown(event) {
 
                         try {
                             var message = JSON.parse(arg.message);
+                            console.log("Parsed message:", message);
+                            console.log("Message action:", message.action);
+                            console.log("Message has data:", !!message.data);
 
                             if (message.action === 'insert' && message.data) {
                                 console.log("Received data to insert:", message.data);
+                                console.log("Closing dialog...");
                                 dialog.close();
 
+                                console.log("About to call insertDataIntoExcel...");
                                 // Insert data into Excel
                                 insertDataIntoExcel(message.data, event);
                             } else if (arg.message === 'cancel') {
                                 console.log("User cancelled");
                                 dialog.close();
                                 event.completed();
+                            } else {
+                                console.log("Unknown action or no data");
+                                dialog.close();
+                                event.completed();
                             }
                         } catch (parseErr) {
+                            console.error("Error in message handler:", parseErr);
+                            console.error("Parse error details:", parseErr.message);
                             // Not JSON, might be simple message
                             if (arg.message === 'cancel') {
                                 console.log("User cancelled");
