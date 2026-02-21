@@ -254,13 +254,33 @@ function pasteFromMarkdown(event) {
                     // Handle messages from dialog
                     dialog.addEventHandler(Office.EventType.DialogMessageReceived, function(arg) {
                         console.log("Message from dialog:", arg.message);
-                        dialog.close();
 
-                        if (arg.message === 'success') {
-                            console.log("✓ Data inserted successfully");
+                        try {
+                            var message = JSON.parse(arg.message);
+
+                            if (message.action === 'insert' && message.data) {
+                                console.log("Received data to insert:", message.data);
+                                dialog.close();
+
+                                // Insert data into Excel
+                                insertDataIntoExcel(message.data, event);
+                            } else if (arg.message === 'cancel') {
+                                console.log("User cancelled");
+                                dialog.close();
+                                event.completed();
+                            }
+                        } catch (parseErr) {
+                            // Not JSON, might be simple message
+                            if (arg.message === 'cancel') {
+                                console.log("User cancelled");
+                                dialog.close();
+                                event.completed();
+                            } else {
+                                console.error("Error parsing message:", parseErr);
+                                dialog.close();
+                                event.completed();
+                            }
                         }
-
-                        event.completed();
                     });
                 } else {
                     console.error("✗ Failed to open paste dialog:", result.error);
@@ -272,4 +292,42 @@ function pasteFromMarkdown(event) {
         console.error("✗ Exception opening paste dialog:", err);
         event.completed();
     }
+}
+
+function insertDataIntoExcel(data, event) {
+    console.log("insertDataIntoExcel called, rows:", data.length);
+
+    Excel.run(function(ctx) {
+        var sheet = ctx.workbook.worksheets.getActiveWorksheet();
+        var range = ctx.workbook.getSelectedRange();
+
+        // Load the range to get starting position
+        range.load('address');
+
+        return ctx.sync().then(function() {
+            console.log('Inserting at:', range.address);
+
+            // Calculate dimensions
+            var numRows = data.length;
+            var numCols = data[0] ? data[0].length : 0;
+            console.log('Dimensions:', numRows, 'rows x', numCols, 'cols');
+
+            // Get range for data
+            var targetRange = range.getResizedRange(numRows - 1, numCols - 1);
+
+            // Set values
+            targetRange.values = data;
+
+            return ctx.sync();
+        });
+    }).then(function() {
+        console.log("✓ Data inserted successfully!");
+        event.completed();
+    }).catch(function(error) {
+        console.error("✗ Error inserting data:", error);
+        if (error.debugInfo) {
+            console.error("Debug info:", JSON.stringify(error.debugInfo));
+        }
+        event.completed();
+    });
 }

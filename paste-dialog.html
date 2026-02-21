@@ -175,9 +175,16 @@
                 insertBtn.disabled = true;
                 insertBtn.textContent = 'Inserting...';
 
-                insertIntoExcel(data);
+                // Send data to parent window (FunctionFile) to insert
+                console.log('Sending data to parent:', data);
+                Office.context.ui.messageParent(JSON.stringify({
+                    action: 'insert',
+                    data: data
+                }));
             } catch (err) {
                 showError('Error parsing markdown: ' + err.message);
+                insertBtn.disabled = false;
+                insertBtn.textContent = 'Insert into Excel';
             }
         });
 
@@ -279,63 +286,8 @@
             });
         }
 
-        function insertIntoExcel(data) {
-            console.log('insertIntoExcel called with data:', data);
-            console.log('Data dimensions:', data.length, 'x', (data[0] ? data[0].length : 0));
-
-            if (!data || data.length === 0 || !data[0] || data[0].length === 0) {
-                showError('No valid data to insert');
-                insertBtn.disabled = false;
-                insertBtn.textContent = 'Insert into Excel';
-                return;
-            }
-
-            Excel.run(function(ctx) {
-                console.log('Excel.run started');
-                var sheet = ctx.workbook.worksheets.getActiveWorksheet();
-                var range = ctx.workbook.getSelectedRange();
-
-                // Load the range to get starting position
-                range.load('address');
-
-                return ctx.sync().then(function() {
-                    console.log('Starting at:', range.address);
-
-                    // Calculate dimensions
-                    var numRows = data.length;
-                    var numCols = data[0].length;
-                    console.log('Will insert:', numRows, 'rows x', numCols, 'cols');
-
-                    // Get range for data
-                    var targetRange = range.getResizedRange(numRows - 1, numCols - 1);
-                    console.log('Target range created');
-
-                    // Set values
-                    targetRange.values = data;
-                    console.log('Values set, syncing...');
-
-                    return ctx.sync();
-                }).then(function() {
-                    console.log('Sync completed successfully');
-                });
-            }).then(function() {
-                console.log('Data inserted successfully!');
-                insertBtn.textContent = 'Success!';
-                setTimeout(function() {
-                    // Close dialog
-                    Office.context.ui.messageParent('success');
-                }, 500);
-            }).catch(function(error) {
-                console.error('Error inserting data:', error);
-                console.error('Error details:', JSON.stringify(error));
-                if (error.debugInfo) {
-                    console.error('Debug info:', JSON.stringify(error.debugInfo));
-                }
-                showError('Failed to insert: ' + (error.message || error.toString()));
-                insertBtn.disabled = false;
-                insertBtn.textContent = 'Insert into Excel';
-            });
-        }
+        // Note: Dialog cannot access Excel directly
+        // Data is sent to parent (FunctionFile) via messageParent
 
         function showError(message) {
             errorDiv.textContent = message;
