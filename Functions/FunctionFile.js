@@ -162,42 +162,15 @@ function tryTextareaMethod(result, event) {
 function showMarkdownDialog(markdown, event) {
     console.log("showMarkdownDialog called");
 
-    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
-        'body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }' +
-        'h2 { color: #2c3e50; margin-top: 0; }' +
-        'textarea { width: 100%; height: 200px; padding: 10px; border: 2px solid #3498db; ' +
-        'border-radius: 5px; font-family: "Courier New", monospace; font-size: 14px; }' +
-        'button { background: #3498db; color: white; border: none; padding: 12px 24px; ' +
-        'border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%; }' +
-        'button:hover { background: #2980b9; }' +
-        '.success { color: #27ae60; margin-top: 10px; display: none; font-weight: bold; }' +
-        '</style></head><body>' +
-        '<h2>📋 Copy Markdown</h2>' +
-        '<textarea id="markdown" readonly>' + escapeHtml(markdown) + '</textarea>' +
-        '<button onclick="copyText()">Copy to Clipboard</button>' +
-        '<div class="success" id="success">✓ Copied!</div>' +
-        '<script>' +
-        'document.getElementById("markdown").select();' +
-        'function copyText() {' +
-        '  var textarea = document.getElementById("markdown");' +
-        '  textarea.select();' +
-        '  try {' +
-        '    var success = document.execCommand("copy");' +
-        '    if (success) {' +
-        '      document.getElementById("success").style.display = "block";' +
-        '      setTimeout(function() { document.getElementById("success").style.display = "none"; }, 2000);' +
-        '    }' +
-        '  } catch (err) {' +
-        '    alert("Please press Ctrl+C (Cmd+C on Mac) to copy");' +
-        '  }' +
-        '}' +
-        '<\/script></body></html>';
+    // Use hosted dialog page with markdown as URL parameter
+    var dialogUrl = 'https://ravenous47.github.io/copy-to-markdown-addin-web/dialog.html?md=' +
+                    encodeURIComponent(markdown);
 
-    console.log("Attempting to open dialog...");
+    console.log("Opening dialog at:", dialogUrl);
 
     try {
         Office.context.ui.displayDialogAsync(
-            'data:text/html,' + encodeURIComponent(html),
+            dialogUrl,
             { height: 50, width: 40 },
             function(result) {
                 console.log("Dialog callback received");
