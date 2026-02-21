@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy to Markdown - Excel Add-In</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 800px;
+            padding: 40px;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        .section {
+            margin: 30px 0;
+        }
+        h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 10px 10px 0;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+        .button:hover {
+            background: #764ba2;
+        }
+        .button.secondary {
+            background: #28a745;
+        }
+        .button.secondary:hover {
+            background: #218838;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        ul {
+            margin-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Copy to Markdown</h1>
+        <p class="subtitle">Excel Add-In for converting tables to Markdown format</p>
+
+        <div class="section">
+            <h2>🚀 Quick Start</h2>
+            <a href="manifest.xml" class="button" download>Download manifest.xml</a>
+            <a href="https://github.com/ravenous47/copy-to-markdown-addin-web" class="button secondary">View on GitHub</a>
+        </div>
+
+        <div class="section">
+            <h2>✨ Features</h2>
+            <div class="feature-list">
+                <div class="feature">
+                    <strong>📋 Copy to Markdown</strong><br>
+                    Convert Excel ranges to Markdown tables
+                </div>
+                <div class="feature">
+                    <strong>🎨 Preserve Formatting</strong><br>
+                    Maintains alignment and text formatting
+                </div>
+                <div class="feature">
+                    <strong>🌐 Cross-Platform</strong><br>
+                    Works on Excel Online, Windows, and Mac
+                </div>
+                <div class="feature">
+                    <strong>⚡ Fast & Simple</strong><br>
+                    Right-click and copy - that's it!
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📥 Installation</h2>
+
+            <h3>For Excel Online:</h3>
+            <ol>
+                <li>Open Excel Online</li>
+                <li>Go to <strong>Insert</strong> → <strong>Office Add-ins</strong></li>
+                <li>Click <strong>Upload My Add-in</strong></li>
+                <li>Upload the <code>manifest.xml</code> file</li>
+            </ol>
+
+            <h3>For Desktop Excel (2016+):</h3>
+            <ol>
+                <li>Download <code>manifest.xml</code> using the button above</li>
+                <li>Save it to a local folder</li>
+                <li>Open Excel → <strong>File</strong> → <strong>Options</strong> → <strong>Trust Center</strong> → <strong>Trust Center Settings</strong></li>
+                <li>Go to <strong>Trusted Add-in Catalogs</strong></li>
+                <li>Add your folder path to the catalog</li>
+                <li>Restart Excel</li>
+                <li><strong>Insert</strong> → <strong>My Add-ins</strong> → <strong>Shared Folder</strong></li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>📖 How to Use</h2>
+            <ol>
+                <li>Select cells in Excel</li>
+                <li>Right-click on the selection</li>
+                <li>Choose <strong>"Copy to Markdown"</strong></li>
+                <li>Paste anywhere (GitHub, forums, documentation, etc.)</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Important Files</h2>
+            <ul>
+                <li><a href="manifest.xml">manifest.xml</a> - Add-in manifest file</li>
+                <li><a href="Home.html">Home.html</a> - Main interface</li>
+                <li><a href="Functions/FunctionFile.html">FunctionFile.html</a> - Background functions</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Note:</strong> This add-in requires an internet connection to load.
+            Make sure the URLs in the manifest match your GitHub Pages deployment.
+        </div>
+
+        <div class="section" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 0.9em;">
+            Based on <a href="https://github.com/nuitsjp/CopyToMarkdownAddIn" style="color: #667eea;">CopyToMarkdownAddIn</a> by nuits.jp
+        </div>
+    </div>
+</body>
+</html>
