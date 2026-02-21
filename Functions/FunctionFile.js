@@ -62,15 +62,51 @@ function copyToMarkdown(event) {
                 }
 
                 var result = resultBuffer.toString();
-                window.clipboardData.setData("Text", result);
+
+                // Copy to clipboard using modern API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    // Modern browsers
+                    navigator.clipboard.writeText(result).then(function() {
+                        console.log("Copied to clipboard");
+                        event.completed();
+                    }).catch(function(err) {
+                        console.error("Clipboard error:", err);
+                        // Fallback: show result in dialog
+                        Office.context.ui.displayDialogAsync(
+                            'data:text/html,' + encodeURIComponent('<textarea style="width:100%;height:100%">' + result + '</textarea>'),
+                            {height: 50, width: 50}
+                        );
+                        event.completed();
+                    });
+                } else if (window.clipboardData) {
+                    // IE fallback
+                    window.clipboardData.setData("Text", result);
+                    event.completed();
+                } else {
+                    // Last resort: create temporary textarea
+                    var textarea = document.createElement('textarea');
+                    textarea.value = result;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        console.log("Copied using execCommand");
+                    } catch (err) {
+                        console.error("Copy failed:", err);
+                    }
+                    document.body.removeChild(textarea);
+                    event.completed();
+                }
             });
     }).catch(function (error) {
         console.log("Error: " + error);
         if (error instanceof OfficeExtension.Error) {
             console.log("Debug info: " + JSON.stringify(error.debugInfo));
         }
+        event.completed({allowEvent: false});
     });
-    event.completed();
 }
 
 function formatText(range)
