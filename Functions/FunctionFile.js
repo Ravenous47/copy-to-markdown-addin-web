@@ -166,7 +166,6 @@ function showNotification(title, message) {
         );
     }
 }
-}
 
 function formatText(range)
 {
