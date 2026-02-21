@@ -1,9 +1,24 @@
 ﻿// 新しいページが読み込まれるたびに初期化関数を実行する必要があります。
+console.log("FunctionFile.js loaded!");
+
 (function () {
     Office.initialize = function (reason) {
+        console.log("Office.initialize called, reason:", reason);
         // 必要な初期化は、ここで実行できます。
     };
 })();
+
+// Register the function globally
+if (typeof window !== 'undefined') {
+    window.copyToMarkdown = copyToMarkdown;
+    console.log("copyToMarkdown registered globally");
+}
+
+// Also register with Office
+if (typeof Office !== 'undefined' && Office.actions) {
+    Office.actions.associate("copyToMarkdown", copyToMarkdown);
+    console.log("copyToMarkdown registered with Office.actions");
+}
 
 var NewLine = "\n";
 
