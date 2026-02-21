@@ -84,8 +84,8 @@ function copyToMarkdown(event) {
                 console.log("Generated markdown (" + result.length + " chars)");
                 console.log("Markdown preview:", result.substring(0, 100));
 
-                // Show result in a dialog for copying (clipboard APIs fail in Excel Online)
-                showMarkdownDialog(result, event);
+                // Try clipboard APIs first, fall back to dialog
+                tryAllClipboardMethods(result, event);
             });
     }).catch(function (error) {
         console.error("Error in copyToMarkdown:", error);
@@ -97,48 +97,66 @@ function copyToMarkdown(event) {
     });
 }
 
-function tryModernClipboard(result, event) {
+function tryAllClipboardMethods(result, event) {
+    console.log("Attempting clipboard copy...");
+
+    // Method 1: Try modern Clipboard API with focus
     if (navigator.clipboard && navigator.clipboard.writeText) {
+        window.focus();
         navigator.clipboard.writeText(result).then(function() {
-            console.log("✓ Copied using navigator.clipboard");
-            showNotification("Success", "Copied to clipboard!");
+            console.log("✓ Copied using navigator.clipboard!");
             event.completed();
         }).catch(function(err) {
-            console.error("✗ navigator.clipboard failed:", err);
-            tryTextareaFallback(result, event);
+            console.log("navigator.clipboard failed:", err.message);
+            tryTextareaMethod(result, event);
         });
     } else {
-        tryTextareaFallback(result, event);
+        console.log("navigator.clipboard not available");
+        tryTextareaMethod(result, event);
     }
 }
 
-function tryTextareaFallback(result, event) {
+function tryTextareaMethod(result, event) {
+    console.log("Trying textarea method...");
+    // Force focus on window first
+    window.focus();
+
     var textarea = document.createElement('textarea');
     textarea.value = result;
     textarea.style.position = 'fixed';
-    textarea.style.left = '-999999px';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.width = '2em';
+    textarea.style.height = '2em';
+    textarea.style.padding = '0';
+    textarea.style.border = 'none';
+    textarea.style.outline = 'none';
+    textarea.style.boxShadow = 'none';
+    textarea.style.background = 'transparent';
     document.body.appendChild(textarea);
+
+    // Give it focus explicitly
+    textarea.focus();
     textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
 
     var success = false;
     try {
         success = document.execCommand('copy');
-        console.log("execCommand copy:", success ? "✓ success" : "✗ failed");
+        console.log("execCommand result:", success);
     } catch (err) {
-        console.error("✗ execCommand failed:", err);
+        console.error("execCommand error:", err);
     }
 
     document.body.removeChild(textarea);
 
     if (success) {
-        showNotification("Success", "Copied using fallback method!");
+        console.log("✓ Copied using execCommand!");
+        event.completed();
     } else {
-        showNotification("Error", "Could not copy. Please use Ctrl+C manually.");
-        // Select the data in Excel so user can copy manually
-        console.log("Clipboard unavailable. Result:", result);
+        console.log("All clipboard methods failed, showing dialog");
+        showMarkdownDialog(result, event);
     }
-
-    event.completed();
 }
 
 function showMarkdownDialog(markdown, event) {
