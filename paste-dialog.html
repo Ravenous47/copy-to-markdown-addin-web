@@ -186,41 +186,58 @@
         });
 
         function parseMarkdownTable(markdown) {
-            // Use markdown-it to parse markdown
-            var md = window.markdownit();
-            var tokens = md.parse(markdown, {});
+            console.log('parseMarkdownTable called');
+            console.log('Input markdown:', markdown.substring(0, 100));
 
             var data = [];
-            var currentTable = null;
 
-            // Extract table data from tokens
-            for (var i = 0; i < tokens.length; i++) {
-                var token = tokens[i];
+            // Try markdown-it if available
+            if (typeof window.markdownit !== 'undefined') {
+                console.log('Using markdown-it parser');
+                try {
+                    var md = window.markdownit();
+                    var tokens = md.parse(markdown, {});
+                    console.log('Tokens:', tokens.length);
 
-                if (token.type === 'table_open') {
-                    currentTable = [];
-                } else if (token.type === 'tr_open') {
-                    currentTable.push([]);
-                } else if (token.type === 'td_open' || token.type === 'th_open') {
-                    // Next token should be inline with text
-                    if (i + 1 < tokens.length && tokens[i + 1].type === 'inline') {
-                        var text = tokens[i + 1].content;
-                        currentTable[currentTable.length - 1].push(text);
+                    var currentTable = null;
+
+                    // Extract table data from tokens
+                    for (var i = 0; i < tokens.length; i++) {
+                        var token = tokens[i];
+
+                        if (token.type === 'table_open') {
+                            currentTable = [];
+                        } else if (token.type === 'tr_open') {
+                            currentTable.push([]);
+                        } else if (token.type === 'td_open' || token.type === 'th_open') {
+                            // Next token should be inline with text
+                            if (i + 1 < tokens.length && tokens[i + 1].type === 'inline') {
+                                var text = tokens[i + 1].content;
+                                currentTable[currentTable.length - 1].push(text);
+                            }
+                        } else if (token.type === 'table_close') {
+                            // Table complete
+                            if (currentTable && currentTable.length > 0) {
+                                data = currentTable;
+                                break;
+                            }
+                        }
                     }
-                } else if (token.type === 'table_close') {
-                    // Table complete
-                    if (currentTable && currentTable.length > 0) {
-                        data = currentTable;
-                        break;
-                    }
+                    console.log('markdown-it parsed:', data.length, 'rows');
+                } catch (err) {
+                    console.error('markdown-it error:', err);
                 }
+            } else {
+                console.warn('markdown-it not available');
             }
 
             // Fallback to simple parsing if markdown-it didn't find table
             if (data.length === 0) {
+                console.log('Falling back to simple parser');
                 data = parseSimpleTable(markdown);
             }
 
+            console.log('Final parsed data:', data);
             return data;
         }
 
@@ -263,7 +280,18 @@
         }
 
         function insertIntoExcel(data) {
+            console.log('insertIntoExcel called with data:', data);
+            console.log('Data dimensions:', data.length, 'x', (data[0] ? data[0].length : 0));
+
+            if (!data || data.length === 0 || !data[0] || data[0].length === 0) {
+                showError('No valid data to insert');
+                insertBtn.disabled = false;
+                insertBtn.textContent = 'Insert into Excel';
+                return;
+            }
+
             Excel.run(function(ctx) {
+                console.log('Excel.run started');
                 var sheet = ctx.workbook.worksheets.getActiveWorksheet();
                 var range = ctx.workbook.getSelectedRange();
 
@@ -276,22 +304,34 @@
                     // Calculate dimensions
                     var numRows = data.length;
                     var numCols = data[0].length;
+                    console.log('Will insert:', numRows, 'rows x', numCols, 'cols');
 
                     // Get range for data
                     var targetRange = range.getResizedRange(numRows - 1, numCols - 1);
+                    console.log('Target range created');
 
                     // Set values
                     targetRange.values = data;
+                    console.log('Values set, syncing...');
 
                     return ctx.sync();
+                }).then(function() {
+                    console.log('Sync completed successfully');
                 });
             }).then(function() {
                 console.log('Data inserted successfully!');
-                // Close dialog
-                Office.context.ui.messageParent('success');
+                insertBtn.textContent = 'Success!';
+                setTimeout(function() {
+                    // Close dialog
+                    Office.context.ui.messageParent('success');
+                }, 500);
             }).catch(function(error) {
                 console.error('Error inserting data:', error);
-                showError('Failed to insert: ' + error.message);
+                console.error('Error details:', JSON.stringify(error));
+                if (error.debugInfo) {
+                    console.error('Debug info:', JSON.stringify(error.debugInfo));
+                }
+                showError('Failed to insert: ' + (error.message || error.toString()));
                 insertBtn.disabled = false;
                 insertBtn.textContent = 'Insert into Excel';
             });
